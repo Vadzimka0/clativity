@@ -5,3 +5,6 @@ export const FLIKI_API_URL = 'https://api.fliki.ai/v1';
 
 export const QUICKPAYMENTS_API_URL = 'https://sandbox.quickpayments.eu';
 export const QUICKPAYMENTS_URI_V3_SESSIONS = 'api/v3/site_api/payment_sessions';
+
+export const EMAIL_SEND_QUEUE = 'email-send-queue';
+export const CONFIRM_PROCESS = 'confirm';

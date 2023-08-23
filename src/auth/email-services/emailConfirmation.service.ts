@@ -1,19 +1,21 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
+import { Queue } from 'bull';
+import { InjectQueue } from '@nestjs/bull';
 
-import { EmailService } from './email.service';
 import { UserService } from 'src/user/services';
 import { AccountTypeEnum } from 'src/user/enums/account-type.enum';
-import { TokenPayload } from '../types';
+import { EmailConfirmType, TokenPayload } from '../types';
+import { CONFIRM_PROCESS, EMAIL_SEND_QUEUE } from '../../shared/constants';
 
 @Injectable()
 export class EmailConfirmationService {
   constructor(
     private readonly jwtService: JwtService,
     private readonly configService: ConfigService,
-    private readonly emailService: EmailService,
     private readonly userService: UserService,
+    @InjectQueue(EMAIL_SEND_QUEUE) private readonly emailQueue: Queue,
   ) {}
 
   public sendVerificationLink(email: string) {
@@ -24,8 +26,12 @@ export class EmailConfirmationService {
         'JWT_VERIFICATION_TOKEN_EXPIRATION_TIME',
       )}s`,
     });
+    const url = `${this.configService.get(
+      'EMAIL_CONFIRMATION_URL',
+    )}?secret_code=${token}`;
+    const data: EmailConfirmType = { email, url };
 
-    return this.emailService.sendUserConfirmation(email, token);
+    return this.emailQueue.add(CONFIRM_PROCESS, data);
   }
 
   public async confirmEmail(email: string) {
